@@ -1,1 +1,1 @@
-# Fast-Crypto-Options-Pricing
+# Fast Crypto Options Pricing
