@@ -1,0 +1,3 @@
+# Ignore Bazel output and build files
+bazel-*
+.bazel*
