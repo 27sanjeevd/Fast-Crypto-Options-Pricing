@@ -18,9 +18,6 @@ public:
   void print_bbo();
   std::pair<Price, Price> return_bbo();
 
-  void initialize_exchange(const std::string &exchange_id);
-  void send_snapshot(int client_socket, int n_levels);
-
 private:
   std::vector<std::pair<Price, Volume>> bids_;
   std::vector<std::pair<Price, Volume>> asks_;
@@ -29,6 +26,4 @@ private:
   void update_level(Price price, Volume new_volume, T &orders_list);
 
   template <typename T> void delete_level(Price price, T &orders_list);
-
-  void ToNetworkOrder(double value, char *buffer);
 };

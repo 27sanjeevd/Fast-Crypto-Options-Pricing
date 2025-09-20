@@ -28,3 +28,31 @@ TEST(OrderbookTest, AddTwoAsks) {
 
   EXPECT_EQ(bbo.second, 100.0);
 }
+
+TEST(OrderbookTest, UpdateBidVolume) {
+  Orderbook ob;
+  ob.update_bid(100.0, 5);
+  ob.update_bid(100.0, 10);
+  auto bbo = ob.return_bbo();
+
+  EXPECT_EQ(bbo.first, 100.0);
+}
+
+TEST(OrderbookTest, UpdateAskVolume) {
+  Orderbook ob;
+  ob.update_ask(100.0, 5);
+  ob.update_ask(100.0, 10);
+  auto bbo = ob.return_bbo();
+
+  EXPECT_EQ(bbo.second, 100.0);
+}
+
+TEST(OrderbookTest, RemoveAsk) {
+  Orderbook ob;
+  ob.update_ask(100.0, 5);
+  ob.update_ask(101.0, 5);
+  ob.update_ask(100.0, 0);
+  auto bbo = ob.return_bbo();
+
+  EXPECT_EQ(bbo.second, 101.0);
+}
