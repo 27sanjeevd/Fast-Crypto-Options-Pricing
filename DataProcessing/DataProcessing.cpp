@@ -2,5 +2,5 @@
 
 // Example implementation
 void process_data() {
-  // Data processing logic
+    // Data processing logic
 }
