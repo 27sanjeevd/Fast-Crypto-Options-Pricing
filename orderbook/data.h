@@ -3,6 +3,9 @@
 #include <tuple>
 #include <vector>
 
+using Price = double;
+using Volume = double;
+
 struct ReceivedData {
   uint32_t message_type;
   uint32_t currency_name;
@@ -10,6 +13,6 @@ struct ReceivedData {
 };
 
 struct BookUpdate {
-  double price;
-  double volume;
+  Price price;
+  Volume volume;
 };

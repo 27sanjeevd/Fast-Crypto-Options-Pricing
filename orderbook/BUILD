@@ -1,10 +1,20 @@
 cc_library(
-    name = "orderbook",
-    srcs = ["orderbook.cpp"],
+    name = "Orderbook",
+    srcs = ["Orderbook.cpp"],
     hdrs = [
-        "orderbook.h",
-        "data.h",
+        "Orderbook.h",
+        "Data.h",
     ],
     visibility = ["//visibility:public"],
+    copts = ["-std=c++20"],
+)
+
+cc_test(
+    name = "OrderbookTest",
+    srcs = ["OrderbookTest.cpp"],
+    deps = [
+        ":Orderbook",
+        "@googletest//:gtest_main",
+    ],
     copts = ["-std=c++20"],
 )

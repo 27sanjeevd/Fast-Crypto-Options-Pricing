@@ -1,4 +1,4 @@
-#include "orderbook.h"
+#include "Orderbook.h"
 
 #include <libkern/OSByteOrder.h>
 #include <sys/socket.h>
@@ -8,7 +8,7 @@ void Orderbook::update_level(Price price, Volume new_volume, T &orders_list) {
 
   auto it =
       std::lower_bound(orders_list.begin(), orders_list.end(), price,
-                       [](const auto &a, double b) { return a.first < b; });
+                       [](const auto &a, double b) { return a.first > b; });
 
   if (it != orders_list.end() && it->first == price) {
     it->second = new_volume;
@@ -22,7 +22,7 @@ void Orderbook::delete_level(Price price, T &orders_list) {
 
   auto it =
       std::lower_bound(orders_list.begin(), orders_list.end(), price,
-                       [](const auto &a, double b) { return a.first < b; });
+                       [](const auto &a, double b) { return a.first > b; });
 
   if (it == orders_list.end()) {
     return;
@@ -60,4 +60,11 @@ void Orderbook::print_bbo() {
   }
 
   std::cout << "\n";
+}
+
+std::pair<Price, Price> Orderbook::return_bbo() {
+  Price best_bid = bids_.empty() ? 0 : bids_.begin()->first;
+  Price best_ask = asks_.empty() ? 0 : -1 * asks_.begin()->first;
+
+  return {best_bid, best_ask};
 }

@@ -1,6 +1,11 @@
 cc_binary(
     name = "main",
     srcs = ["main.cpp"],
-    deps = ["//orderbook:orderbook"],
+    deps = [
+        "//Orderbook:Orderbook",
+        "//DataProcessing:DataProcessing",
+        "//ExchangeConnectivity:ExchangeConnectivity",
+        "//Pricing:Pricing",
+    ],
     copts = ["-std=c++20"],
 )

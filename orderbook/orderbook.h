@@ -8,17 +8,15 @@
 #include <unordered_map>
 #include <vector>
 
-#include "data.h"
+#include "Data.h"
 
 class Orderbook {
 public:
-  using Price = double;
-  using Volume = double;
-
   void update_bid(Price price, Volume new_volume);
   void update_ask(Price price, Volume new_volume);
 
   void print_bbo();
+  std::pair<Price, Price> return_bbo();
 
   void initialize_exchange(const std::string &exchange_id);
   void send_snapshot(int client_socket, int n_levels);

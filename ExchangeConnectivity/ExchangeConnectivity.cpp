@@ -1,4 +1,4 @@
-#include "exchange_connectivity.h"
+#include "ExchangeConnectivity.h"
 
 // Example implementation
 void connect_to_exchange() {
