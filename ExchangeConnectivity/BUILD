@@ -9,11 +9,11 @@ cc_library(
         "-pthread",
     ],
     deps = [
-        "@boost//:system",
-        "@boost//:thread",
-        "@boost//:asio",
-        "@boost//:json",
+        "@boost.system//:boost.system",
+        "@boost.thread//:boost.thread", 
+        "@boost.asio//:boost.asio",
+        "@boost.beast//:boost.beast",
+        "@boost.json//:boost.json",
         "@openssl//:openssl",
-        "@curl//:curl",
     ],
 )
