@@ -23,7 +23,7 @@ template <typename T> void Orderbook::delete_level(Price price, T &orders_list) 
     orders_list.erase(it);
 }
 
-void Orderbook::update_bid(Price price, Volume new_volume) {
+void Orderbook::UpdateBid(Price price, Volume new_volume) {
     if (new_volume == 0) {
         delete_level(price, bids_);
     } else {
@@ -31,7 +31,7 @@ void Orderbook::update_bid(Price price, Volume new_volume) {
     }
 }
 
-void Orderbook::update_ask(Price price, Volume new_volume) {
+void Orderbook::UpdateAsk(Price price, Volume new_volume) {
 
     if (new_volume == 0) {
         delete_level(-1 * price, asks_);
@@ -40,7 +40,7 @@ void Orderbook::update_ask(Price price, Volume new_volume) {
     }
 }
 
-void Orderbook::print_bbo() {
+void Orderbook::PrintBbo() {
 
     if (bids_.size() > 0) {
         std::cout << "Bid: " << std::fixed << std::setprecision(4) << bids_.begin()->first << " ";
@@ -52,7 +52,7 @@ void Orderbook::print_bbo() {
     std::cout << "\n";
 }
 
-std::pair<Price, Price> Orderbook::return_bbo() {
+std::pair<Price, Price> Orderbook::ReturnBbo() {
     Price best_bid = bids_.empty() ? 0 : bids_.begin()->first;
     Price best_ask = asks_.empty() ? 0 : -1 * asks_.begin()->first;
 

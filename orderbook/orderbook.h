@@ -12,11 +12,11 @@
 
 class Orderbook {
   public:
-    void update_bid(Price price, Volume new_volume);
-    void update_ask(Price price, Volume new_volume);
+    void UpdateBid(Price price, Volume new_volume);
+    void UpdateAsk(Price price, Volume new_volume);
 
-    void print_bbo();
-    std::pair<Price, Price> return_bbo();
+    void PrintBbo();
+    std::pair<Price, Price> ReturnBbo();
 
   private:
     std::vector<std::pair<Price, Volume>> bids_;

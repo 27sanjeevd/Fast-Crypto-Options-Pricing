@@ -1,4 +1,4 @@
 #include "Pricing.h"
 
 // Example implementation
-int price_option() { return 42; }
+int PriceOption() { return 42; }

@@ -3,6 +3,7 @@
 #include <atomic>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/ssl.hpp>
@@ -22,7 +23,7 @@ class ExchangeWebsocketClient {
   public:
     static constexpr auto CONNECTION_TIMEOUT = std::chrono::seconds(30);
 
-    ExchangeWebsocketClient();
+    ExchangeWebsocketClient(const std::vector<std::string> &tickers);
     ~ExchangeWebsocketClient();
 
     // Non-copyable and non-movable
@@ -31,8 +32,8 @@ class ExchangeWebsocketClient {
     ExchangeWebsocketClient(ExchangeWebsocketClient &&) = delete;
     ExchangeWebsocketClient &operator=(ExchangeWebsocketClient &&) = delete;
 
-    void start();
-    void stop();
+    void Start();
+    void Stop();
 
   private:
     static const std::string HOST;
@@ -40,11 +41,11 @@ class ExchangeWebsocketClient {
     static const std::string TARGET;
 
     // Async callback handlers
-    void on_resolve(beast::error_code ec, tcp::resolver::results_type results);
-    void on_connect(beast::error_code ec, tcp::resolver::results_type::endpoint_type ep);
-    void on_ssl_handshake(beast::error_code ec);
-    void on_handshake(beast::error_code ec);
-    void on_read(beast::error_code ec, std::size_t bytes_transferred);
+    void OnResolve(beast::error_code ec, tcp::resolver::results_type results);
+    void OnConnect(beast::error_code ec, tcp::resolver::results_type::endpoint_type ep);
+    void OnSslHandshake(beast::error_code ec);
+    void OnHandshake(beast::error_code ec);
+    void OnRead(beast::error_code ec, std::size_t bytes_transferred);
 
     // Network components
     net::io_context ioc_;
@@ -53,4 +54,7 @@ class ExchangeWebsocketClient {
     std::unique_ptr<websocket::stream<beast::ssl_stream<beast::tcp_stream>>> ws_;
     beast::flat_buffer buffer_;
     std::atomic<bool> running_{false};
+
+    // Subscription data
+    std::vector<std::string> tickers_;
 };
