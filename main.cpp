@@ -9,7 +9,7 @@
 int main() {
     // Define the tickers to subscribe to
     std::vector<std::string> tickers = {"BTCUSD-PERP", "ETHUSD-PERP"};
-    ExchangeWebsocketClient client(tickers);
+    ExchangeWebsocketClient client(tickers, {});
 
     std::cout << "Starting Exchange Websocket Client..." << std::endl;
 

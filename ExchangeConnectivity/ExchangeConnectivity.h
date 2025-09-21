@@ -23,7 +23,7 @@ class ExchangeWebsocketClient {
   public:
     static constexpr auto CONNECTION_TIMEOUT = std::chrono::seconds(30);
 
-    ExchangeWebsocketClient(const std::vector<std::string> &tickers);
+    ExchangeWebsocketClient(const std::vector<std::string> &tickers, const std::vector<std::string> &outbound_channels);
     ~ExchangeWebsocketClient();
 
     // Non-copyable and non-movable
@@ -57,4 +57,5 @@ class ExchangeWebsocketClient {
 
     // Subscription data
     std::vector<std::string> tickers_;
+    std::vector<std::string> outbound_channels_;
 };

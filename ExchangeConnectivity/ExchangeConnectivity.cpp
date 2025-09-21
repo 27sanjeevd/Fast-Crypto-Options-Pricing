@@ -11,7 +11,8 @@ const std::string ExchangeWebsocketClient::HOST = "stream.crypto.com";
 const std::string ExchangeWebsocketClient::PORT = "443";
 const std::string ExchangeWebsocketClient::TARGET = "/exchange/v1/market";
 
-ExchangeWebsocketClient::ExchangeWebsocketClient(const std::vector<std::string> &tickers) : running_(false), tickers_(tickers) {
+ExchangeWebsocketClient::ExchangeWebsocketClient(const std::vector<std::string> &tickers, const std::vector<std::string> &outbound_channels)
+    : running_(false), tickers_(tickers), outbound_channels_(outbound_channels) {
     ctx_.set_verify_mode(ssl::verify_peer);
     ctx_.set_default_verify_paths();
     ws_ = std::make_unique<websocket::stream<beast::ssl_stream<beast::tcp_stream>>>(ioc_, ctx_);
@@ -101,7 +102,6 @@ void ExchangeWebsocketClient::OnHandshake(beast::error_code ec) {
         if (!first) {
             channels << ",";
         }
-        // Subscribe to both book (10 deep) and ticker channels
         channels << "\"book." << ticker << ".10\",\"ticker." << ticker << "\"";
         first = false;
     }
