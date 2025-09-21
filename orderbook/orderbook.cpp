@@ -3,12 +3,8 @@
 #include <libkern/OSByteOrder.h>
 #include <sys/socket.h>
 
-template <typename T>
-void Orderbook::update_level(Price price, Volume new_volume, T &orders_list) {
-
-    auto it =
-        std::lower_bound(orders_list.begin(), orders_list.end(), price,
-                         [](const auto &a, double b) { return a.first > b; });
+template <typename T> void Orderbook::update_level(Price price, Volume new_volume, T &orders_list) {
+    auto it = std::lower_bound(orders_list.begin(), orders_list.end(), price, [](const auto &a, double b) { return a.first > b; });
 
     if (it != orders_list.end() && it->first == price) {
         it->second = new_volume;
@@ -17,12 +13,8 @@ void Orderbook::update_level(Price price, Volume new_volume, T &orders_list) {
     }
 }
 
-template <typename T>
-void Orderbook::delete_level(Price price, T &orders_list) {
-
-    auto it =
-        std::lower_bound(orders_list.begin(), orders_list.end(), price,
-                         [](const auto &a, double b) { return a.first > b; });
+template <typename T> void Orderbook::delete_level(Price price, T &orders_list) {
+    auto it = std::lower_bound(orders_list.begin(), orders_list.end(), price, [](const auto &a, double b) { return a.first > b; });
 
     if (it == orders_list.end()) {
         return;
@@ -51,12 +43,10 @@ void Orderbook::update_ask(Price price, Volume new_volume) {
 void Orderbook::print_bbo() {
 
     if (bids_.size() > 0) {
-        std::cout << "Bid: " << std::fixed << std::setprecision(4)
-                  << bids_.begin()->first << " ";
+        std::cout << "Bid: " << std::fixed << std::setprecision(4) << bids_.begin()->first << " ";
     }
     if (asks_.size() > 0) {
-        std::cout << "Ask: " << std::fixed << std::setprecision(4)
-                  << (-1 * asks_.begin()->first);
+        std::cout << "Ask: " << std::fixed << std::setprecision(4) << (-1 * asks_.begin()->first);
     }
 
     std::cout << "\n";

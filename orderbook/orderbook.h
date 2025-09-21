@@ -22,8 +22,7 @@ class Orderbook {
     std::vector<std::pair<Price, Volume>> bids_;
     std::vector<std::pair<Price, Volume>> asks_;
 
-    template <typename T>
-    void update_level(Price price, Volume new_volume, T &orders_list);
+    template <typename T> void update_level(Price price, Volume new_volume, T &orders_list);
 
     template <typename T> void delete_level(Price price, T &orders_list);
 };
