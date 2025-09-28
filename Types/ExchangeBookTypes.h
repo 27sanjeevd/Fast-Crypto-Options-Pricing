@@ -6,49 +6,51 @@
 
 namespace ExchangeTypes {
 
-// Represents a single level in the order book [price, size, num_orders]
+// MessageHeader definition (moved from SharedTypes.h to avoid circular dependency)
+enum class MessageType : uint32_t { BOOK_SNAPSHOT = 1, BOOK_DELTA_UPDATE = 2, TRADE = 3, UNKNOWN = 0 };
+
+struct MessageHeader {
+    MessageType type;
+    uint32_t size; // Total size of the message including header
+};
+
 struct Level {
-    std::string price;      // Price as string to maintain precision
-    std::string size;       // Size as string to maintain precision
-    std::string num_orders; // Number of orders as string
+    std::string price;
+    std::string size;
+    std::string num_orders;
 
     Level(const std::string &p, const std::string &s, const std::string &n) : price(p), size(s), num_orders(n) {}
-
     Level() = default;
 };
 
-// Represents the book update data for delta updates
 struct BookUpdateData {
     std::vector<Level> asks;
     std::vector<Level> bids;
 };
 
-// Represents the book snapshot data
 struct BookSnapshotData {
     std::vector<Level> asks;
     std::vector<Level> bids;
-    uint64_t tt; // Epoch millis of last book update
-    uint64_t t;  // Epoch millis of message publish
-    uint64_t u;  // Update sequence
+    uint64_t tt;
+    uint64_t t;
+    uint64_t u;
 };
 
-// Represents the book delta update data
 struct BookDeltaData {
     BookUpdateData update;
-    uint64_t tt; // Epoch millis of last book update
-    uint64_t t;  // Epoch millis of message publish
-    uint64_t u;  // Update sequence
-    uint64_t pu; // Previous update sequence
+    uint64_t tt;
+    uint64_t t;
+    uint64_t u;
+    uint64_t pu;
 };
 
-// Base response structure
 struct BaseResponse {
+    MessageHeader header; // Must be first field
     int64_t id;
     std::string method;
     int code;
 };
 
-// Subscription response result for book snapshot
 struct BookSnapshotResult {
     std::string instrument_name;
     std::string subscription;
@@ -57,7 +59,6 @@ struct BookSnapshotResult {
     std::vector<BookSnapshotData> data;
 };
 
-// Subscription response result for book delta updates
 struct BookDeltaResult {
     std::string instrument_name;
     std::string subscription;
@@ -66,26 +67,12 @@ struct BookDeltaResult {
     std::vector<BookDeltaData> data;
 };
 
-// Complete response structures
 struct BookSnapshotResponse : public BaseResponse {
     BookSnapshotResult result;
 };
 
 struct BookDeltaResponse : public BaseResponse {
     BookDeltaResult result;
-};
-
-// Subscription request structure
-struct SubscriptionParams {
-    std::vector<std::string> channels;
-    std::optional<std::string> book_subscription_type; // "SNAPSHOT" or "SNAPSHOT_AND_UPDATE"
-    std::optional<int> book_update_frequency;          // 10, 100, or 500
-};
-
-struct SubscriptionRequest {
-    int64_t id;
-    std::string method;
-    SubscriptionParams params;
 };
 
 } // namespace ExchangeTypes

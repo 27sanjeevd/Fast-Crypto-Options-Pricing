@@ -1,160 +1,41 @@
 #include "DataNormalization.h"
+#include <cstring>
 #include <iostream>
 
 DataNormalization::DataNormalization() {}
 
-std::optional<ExchangeTypes::ExchangeMessage> DataNormalization::ParseExchangeMessage(const std::string &json_str) {
+ExchangeTypes::MessageBuffer DataNormalization::ParseExchangeMessage(const std::string &json_str) {
     try {
         simdjson::dom::element doc = parser_.parse(json_str);
 
         if (doc.type() != simdjson::dom::element_type::OBJECT) {
-            return std::nullopt;
+            return ExchangeTypes::MessageBuffer{};
         }
 
         simdjson::dom::object root = doc;
         ExchangeTypes::MessageType msg_type = DetermineMessageType(root);
 
-        ExchangeTypes::ExchangeMessage message(msg_type);
-
         switch (msg_type) {
-        case ExchangeTypes::MessageType::BOOK_SNAPSHOT: {
-            ExchangeTypes::BookSnapshotResponse response;
+        case ExchangeTypes::MessageType::BOOK_SNAPSHOT:
+            return ParseBookSnapshotMessage(root);
 
-            // Parse base response fields
-            int64_t id;
-            if (root["id"].get_int64().get(id) == simdjson::SUCCESS) {
-                response.id = id;
-            }
+        case ExchangeTypes::MessageType::BOOK_DELTA_UPDATE:
+            return ParseBookDeltaMessage(root);
 
-            std::string_view method;
-            if (root["method"].get_string().get(method) == simdjson::SUCCESS) {
-                response.method = std::string(method);
-            }
-
-            int64_t code;
-            if (root["code"].get_int64().get(code) == simdjson::SUCCESS) {
-                response.code = static_cast<int>(code);
-            }
-
-            // Parse result
-            auto result_obj = root["result"];
-            if (result_obj.error() == simdjson::SUCCESS) {
-                simdjson::dom::object result = result_obj;
-
-                std::string_view instrument_name;
-                if (result["instrument_name"].get_string().get(instrument_name) == simdjson::SUCCESS) {
-                    response.result.instrument_name = std::string(instrument_name);
-                }
-
-                std::string_view subscription;
-                if (result["subscription"].get_string().get(subscription) == simdjson::SUCCESS) {
-                    response.result.subscription = std::string(subscription);
-                }
-
-                std::string_view channel;
-                if (result["channel"].get_string().get(channel) == simdjson::SUCCESS) {
-                    response.result.channel = std::string(channel);
-                }
-
-                int64_t depth;
-                if (result["depth"].get_int64().get(depth) == simdjson::SUCCESS) {
-                    response.result.depth = static_cast<int>(depth);
-                }
-
-                // Parse data array
-                auto data_array = result["data"];
-                if (data_array.error() == simdjson::SUCCESS) {
-                    for (simdjson::dom::element data_item : data_array) {
-                        if (data_item.type() == simdjson::dom::element_type::OBJECT) {
-                            response.result.data.push_back(ParseBookSnapshotData(data_item));
-                        }
-                    }
-                }
-            }
-
-            message.book_snapshot = response;
-            break;
-        }
-
-        case ExchangeTypes::MessageType::BOOK_DELTA_UPDATE: {
-            ExchangeTypes::BookDeltaResponse response;
-
-            // Parse base response fields
-            int64_t id;
-            if (root["id"].get_int64().get(id) == simdjson::SUCCESS) {
-                response.id = id;
-            }
-
-            std::string_view method;
-            if (root["method"].get_string().get(method) == simdjson::SUCCESS) {
-                response.method = std::string(method);
-            }
-
-            int64_t code;
-            if (root["code"].get_int64().get(code) == simdjson::SUCCESS) {
-                response.code = static_cast<int>(code);
-            }
-
-            // Parse result
-            auto result_obj = root["result"];
-            if (result_obj.error() == simdjson::SUCCESS) {
-                simdjson::dom::object result = result_obj;
-
-                std::string_view instrument_name;
-                if (result["instrument_name"].get_string().get(instrument_name) == simdjson::SUCCESS) {
-                    response.result.instrument_name = std::string(instrument_name);
-                }
-
-                std::string_view subscription;
-                if (result["subscription"].get_string().get(subscription) == simdjson::SUCCESS) {
-                    response.result.subscription = std::string(subscription);
-                }
-
-                std::string_view channel;
-                if (result["channel"].get_string().get(channel) == simdjson::SUCCESS) {
-                    response.result.channel = std::string(channel);
-                }
-
-                int64_t depth;
-                if (result["depth"].get_int64().get(depth) == simdjson::SUCCESS) {
-                    response.result.depth = static_cast<int>(depth);
-                }
-
-                // Parse data array
-                auto data_array = result["data"];
-                if (data_array.error() == simdjson::SUCCESS) {
-                    for (simdjson::dom::element data_item : data_array) {
-                        if (data_item.type() == simdjson::dom::element_type::OBJECT) {
-                            response.result.data.push_back(ParseBookDeltaData(data_item));
-                        }
-                    }
-                }
-            }
-
-            message.book_delta = response;
-            break;
-        }
+        case ExchangeTypes::MessageType::TRADE:
+            return ParseTradeMessage(root);
 
         default:
-            return std::nullopt;
+            return ExchangeTypes::MessageBuffer{};
         }
-
-        return message;
 
     } catch (const std::exception &e) {
         std::cerr << "JSON parsing error: " << e.what() << std::endl;
-        return std::nullopt;
+        return ExchangeTypes::MessageBuffer{};
     }
 }
 
 ExchangeTypes::MessageType DataNormalization::DetermineMessageType(const simdjson::dom::object &root) {
-    // Check if it's a subscription request (has params)
-    auto params = root["params"];
-    if (params.error() == simdjson::SUCCESS) {
-        return ExchangeTypes::MessageType::SUBSCRIPTION_REQUEST;
-    }
-
-    // Check if it's a response with result
     auto result = root["result"];
     if (result.error() == simdjson::SUCCESS) {
         std::string_view channel;
@@ -163,11 +44,27 @@ ExchangeTypes::MessageType DataNormalization::DetermineMessageType(const simdjso
                 return ExchangeTypes::MessageType::BOOK_SNAPSHOT;
             } else if (channel == "book.update") {
                 return ExchangeTypes::MessageType::BOOK_DELTA_UPDATE;
+            } else if (channel == "trade") {
+                return ExchangeTypes::MessageType::TRADE;
             }
         }
     }
 
     return ExchangeTypes::MessageType::UNKNOWN;
+}
+
+template <typename T> ExchangeTypes::MessageBuffer DataNormalization::SerializeMessage(const T &message, ExchangeTypes::MessageType type) {
+    ExchangeTypes::MessageBuffer buffer(sizeof(T));
+
+    // Cast the message to bytes and copy
+    T *msg_copy = reinterpret_cast<T *>(buffer.data());
+    *msg_copy = message;
+
+    // Set the header
+    msg_copy->header.type = type;
+    msg_copy->header.size = sizeof(T);
+
+    return buffer;
 }
 
 ExchangeTypes::Level DataNormalization::ParseLevel(const simdjson::dom::array &level_array) {
@@ -278,11 +175,219 @@ ExchangeTypes::BookDeltaData DataNormalization::ParseBookDeltaData(const simdjso
     return data;
 }
 
-// Legacy method for backward compatibility
-std::optional<ExchangeTypes::BookSnapshotResponse> DataNormalization::ParseOrderBookUpdate(const std::string &json_str) {
-    auto message = ParseExchangeMessage(json_str);
-    if (message.has_value() && message->type == ExchangeTypes::MessageType::BOOK_SNAPSHOT) {
-        return message->book_snapshot;
+ExchangeTypes::MessageBuffer DataNormalization::ParseBookSnapshotMessage(const simdjson::dom::object &root) {
+    ExchangeTypes::BookSnapshotResponse response{};
+
+    // Parse base response fields
+    int64_t id;
+    if (root["id"].get_int64().get(id) == simdjson::SUCCESS) {
+        response.id = id;
     }
-    return std::nullopt;
+
+    std::string_view method;
+    if (root["method"].get_string().get(method) == simdjson::SUCCESS) {
+        response.method = std::string(method);
+    }
+
+    int64_t code;
+    if (root["code"].get_int64().get(code) == simdjson::SUCCESS) {
+        response.code = static_cast<int>(code);
+    }
+
+    // Parse result
+    auto result_obj = root["result"];
+    if (result_obj.error() == simdjson::SUCCESS) {
+        simdjson::dom::object result = result_obj;
+
+        std::string_view instrument_name;
+        if (result["instrument_name"].get_string().get(instrument_name) == simdjson::SUCCESS) {
+            response.result.instrument_name = std::string(instrument_name);
+        }
+
+        std::string_view subscription;
+        if (result["subscription"].get_string().get(subscription) == simdjson::SUCCESS) {
+            response.result.subscription = std::string(subscription);
+        }
+
+        std::string_view channel;
+        if (result["channel"].get_string().get(channel) == simdjson::SUCCESS) {
+            response.result.channel = std::string(channel);
+        }
+
+        int64_t depth;
+        if (result["depth"].get_int64().get(depth) == simdjson::SUCCESS) {
+            response.result.depth = static_cast<int>(depth);
+        }
+
+        // Parse data array
+        auto data_array = result["data"];
+        if (data_array.error() == simdjson::SUCCESS) {
+            for (simdjson::dom::element data_item : data_array) {
+                if (data_item.type() == simdjson::dom::element_type::OBJECT) {
+                    response.result.data.push_back(ParseBookSnapshotData(data_item));
+                }
+            }
+        }
+    }
+
+    return SerializeMessage(response, ExchangeTypes::MessageType::BOOK_SNAPSHOT);
+}
+
+ExchangeTypes::MessageBuffer DataNormalization::ParseBookDeltaMessage(const simdjson::dom::object &root) {
+    ExchangeTypes::BookDeltaResponse response{};
+
+    // Parse base response fields
+    int64_t id;
+    if (root["id"].get_int64().get(id) == simdjson::SUCCESS) {
+        response.id = id;
+    }
+
+    std::string_view method;
+    if (root["method"].get_string().get(method) == simdjson::SUCCESS) {
+        response.method = std::string(method);
+    }
+
+    int64_t code;
+    if (root["code"].get_int64().get(code) == simdjson::SUCCESS) {
+        response.code = static_cast<int>(code);
+    }
+
+    // Parse result
+    auto result_obj = root["result"];
+    if (result_obj.error() == simdjson::SUCCESS) {
+        simdjson::dom::object result = result_obj;
+
+        std::string_view instrument_name;
+        if (result["instrument_name"].get_string().get(instrument_name) == simdjson::SUCCESS) {
+            response.result.instrument_name = std::string(instrument_name);
+        }
+
+        std::string_view subscription;
+        if (result["subscription"].get_string().get(subscription) == simdjson::SUCCESS) {
+            response.result.subscription = std::string(subscription);
+        }
+
+        std::string_view channel;
+        if (result["channel"].get_string().get(channel) == simdjson::SUCCESS) {
+            response.result.channel = std::string(channel);
+        }
+
+        int64_t depth;
+        if (result["depth"].get_int64().get(depth) == simdjson::SUCCESS) {
+            response.result.depth = static_cast<int>(depth);
+        }
+
+        // Parse data array
+        auto data_array = result["data"];
+        if (data_array.error() == simdjson::SUCCESS) {
+            for (simdjson::dom::element data_item : data_array) {
+                if (data_item.type() == simdjson::dom::element_type::OBJECT) {
+                    response.result.data.push_back(ParseBookDeltaData(data_item));
+                }
+            }
+        }
+    }
+
+    return SerializeMessage(response, ExchangeTypes::MessageType::BOOK_DELTA_UPDATE);
+}
+
+ExchangeTypes::MessageBuffer DataNormalization::ParseTradeMessage(const simdjson::dom::object &root) {
+    ExchangeTypes::TradeResponse response{};
+
+    // Parse base response fields
+    int64_t id;
+    if (root["id"].get_int64().get(id) == simdjson::SUCCESS) {
+        response.id = id;
+    }
+
+    std::string_view method;
+    if (root["method"].get_string().get(method) == simdjson::SUCCESS) {
+        response.method = std::string(method);
+    }
+
+    int64_t code;
+    if (root["code"].get_int64().get(code) == simdjson::SUCCESS) {
+        response.code = static_cast<int>(code);
+    }
+
+    // Parse result
+    auto result_obj = root["result"];
+    if (result_obj.error() == simdjson::SUCCESS) {
+        simdjson::dom::object result = result_obj;
+
+        std::string_view instrument_name;
+        if (result["instrument_name"].get_string().get(instrument_name) == simdjson::SUCCESS) {
+            response.result.instrument_name = std::string(instrument_name);
+        }
+
+        std::string_view subscription;
+        if (result["subscription"].get_string().get(subscription) == simdjson::SUCCESS) {
+            response.result.subscription = std::string(subscription);
+        }
+
+        std::string_view channel;
+        if (result["channel"].get_string().get(channel) == simdjson::SUCCESS) {
+            response.result.channel = std::string(channel);
+        }
+
+        // Parse data array
+        auto data_array = result["data"];
+        if (data_array.error() == simdjson::SUCCESS) {
+            for (simdjson::dom::element data_item : data_array) {
+                if (data_item.type() == simdjson::dom::element_type::OBJECT) {
+                    response.result.data.push_back(ParseTradeData(data_item));
+                }
+            }
+        }
+    }
+
+    return SerializeMessage(response, ExchangeTypes::MessageType::TRADE);
+}
+
+ExchangeTypes::TradeData DataNormalization::ParseTradeData(const simdjson::dom::object &data_obj) {
+    ExchangeTypes::TradeData data;
+
+    // Parse trade ID (d)
+    std::string_view d;
+    if (data_obj["d"].get_string().get(d) == simdjson::SUCCESS) {
+        data.d = std::string(d);
+    }
+
+    // Parse trade timestamp in milliseconds (t)
+    uint64_t t;
+    if (data_obj["t"].get_uint64().get(t) == simdjson::SUCCESS) {
+        data.t = t;
+    }
+
+    // Parse trade timestamp in nanoseconds (tn) - optional field
+    std::string_view tn;
+    if (data_obj["tn"].get_string().get(tn) == simdjson::SUCCESS) {
+        data.tn = std::string(tn);
+    }
+
+    // Parse trade quantity (q)
+    std::string_view q;
+    if (data_obj["q"].get_string().get(q) == simdjson::SUCCESS) {
+        data.q = std::string(q);
+    }
+
+    // Parse trade price (p)
+    std::string_view p;
+    if (data_obj["p"].get_string().get(p) == simdjson::SUCCESS) {
+        data.p = std::string(p);
+    }
+
+    // Parse side (s) - BUY or SELL
+    std::string_view s;
+    if (data_obj["s"].get_string().get(s) == simdjson::SUCCESS) {
+        data.s = std::string(s);
+    }
+
+    // Parse instrument name (i)
+    std::string_view i;
+    if (data_obj["i"].get_string().get(i) == simdjson::SUCCESS) {
+        data.i = std::string(i);
+    }
+
+    return data;
 }

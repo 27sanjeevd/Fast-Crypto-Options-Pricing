@@ -1,23 +1,58 @@
 #pragma once
 
 #include "ExchangeBookTypes.h"
-#include <optional>
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace ExchangeTypes {
 
-// Enum for message types
-enum class MessageType { BOOK_SNAPSHOT, BOOK_DELTA_UPDATE, SUBSCRIPTION_REQUEST, UNKNOWN };
+using MessageBuffer = std::vector<uint8_t>;
 
-// Union-like structure to hold different message types
-struct ExchangeMessage {
-    MessageType type;
-
-    // Use optional to hold different message types
-    std::optional<BookSnapshotResponse> book_snapshot;
-    std::optional<BookDeltaResponse> book_delta;
-    std::optional<SubscriptionRequest> subscription_request;
-
-    ExchangeMessage(MessageType t) : type(t) {}
+struct SubscriptionParams {
+    std::vector<std::string> channels;
+    std::string book_subscription_type;
+    int book_update_frequency = 0;
 };
+
+struct SubscriptionRequest {
+    int64_t id;
+    std::string method;
+    SubscriptionParams params;
+
+    std::string to_string() const;
+};
+
+// Helper functions to cast buffer to message types
+template <typename T> const T *CastToMessage(const MessageBuffer &buffer) {
+    if (buffer.size() < sizeof(MessageHeader)) {
+        return nullptr;
+    }
+    const MessageHeader *header = reinterpret_cast<const MessageHeader *>(buffer.data());
+    if (buffer.size() < header->size) {
+        return nullptr;
+    }
+    return reinterpret_cast<const T *>(buffer.data());
+}
+
+template <typename T> T *CastToMessage(MessageBuffer &buffer) {
+    if (buffer.size() < sizeof(MessageHeader)) {
+        return nullptr;
+    }
+    const MessageHeader *header = reinterpret_cast<const MessageHeader *>(buffer.data());
+    if (buffer.size() < header->size) {
+        return nullptr;
+    }
+    return reinterpret_cast<T *>(buffer.data());
+}
+
+inline MessageType GetMessageType(const MessageBuffer &buffer) {
+    if (buffer.size() < sizeof(MessageHeader)) {
+        return MessageType::UNKNOWN;
+    }
+    const MessageHeader *header = reinterpret_cast<const MessageHeader *>(buffer.data());
+    return header->type;
+}
 
 } // namespace ExchangeTypes

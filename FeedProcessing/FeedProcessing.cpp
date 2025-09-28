@@ -10,8 +10,51 @@ void FeedProcessing::Run(std::optional<size_t> max_messages) {
             Read data from UDS Socket
         */
 
+        // Temporary definition until we setup socket reading
         std::string message =
-            R"({"id":-1,"method":"subscribe","code":0,"result":{"instrument_name":"ETHUSD-PERP","subscription":"book.ETHUSD-PERP.10","channel":"book.update","depth":10,"data":[{"update":{"asks":[["4457.07","4.4444","8"]],"bids":[]},"t":1758447954211,"tt":1758447954207,"u":249977186042272,"pu":249977185983904,"cs":590576900}]}})";
+            R"(
+                {
+                    "id": -1,
+                    "method": "subscribe",
+                    "code": 0,
+                    "result": {
+                        "instrument_name": "BTCUSD-PERP",
+                        "subscription": "book.BTCUSD-PERP.10",
+                        "channel": "book",
+                        "depth": 10,
+                        "data": [{
+                            "asks": [
+                                ["50126.000000", "0.400000", "2"],
+                                ["50130.000000", "1.279000", "3"],
+                                ["50136.000000", "1.279000", "5"],
+                                ["50137.000000", "0.800000", "7"],
+                                ["50142.000000", "1.279000", "1"],
+                                ["50148.000000", "2.892900", "9"],
+                                ["50154.000000", "1.279000", "5"],
+                                ["50160.000000", "1.133000", "2"],
+                                ["50166.000000", "3.090700", "1"],
+                                ["50172.000000", "1.279000", "1"]
+                            ],
+                            "bids": [
+                                ["50113.500000", "0.400000", "3"],
+                                ["50113.000000", "0.051800", "1"],
+                                ["50112.000000", "1.455300", "1"],
+                                ["50106.000000", "1.174800", "2"],
+                                ["50100.500000", "0.800000", "4"],
+                                ["50100.000000", "1.455300", "5"],
+                                ["50097.500000", "0.048000", "8"],
+                                ["50097.000000", "0.148000", "9"],
+                                ["50096.500000", "0.399200", "2"],
+                                ["50095.000000", "0.399200", "3"]
+                            ],
+                            "tt": 1647917462799,
+                            "t": 1647917463000,
+                            "u": 7845460001
+                        }]
+                    }
+                }
+            )";
+
         ProcessMessage(message);
 
         message_count++;
@@ -22,44 +65,39 @@ void FeedProcessing::Run(std::optional<size_t> max_messages) {
 }
 
 void FeedProcessing::ProcessMessage(const std::string &message) {
-    auto exchange_message = ParseExchangeMessage(message);
-    if (exchange_message.has_value()) {
-        switch (exchange_message->type) {
-        case ExchangeTypes::MessageType::BOOK_SNAPSHOT:
-            if (exchange_message->book_snapshot.has_value()) {
-                auto &snapshot = exchange_message->book_snapshot.value();
-                std::cout << "Parsed book snapshot for " << snapshot.result.instrument_name << " with depth " << snapshot.result.depth << std::endl;
-            }
-            break;
-        case ExchangeTypes::MessageType::BOOK_DELTA_UPDATE:
-            if (exchange_message->book_delta.has_value()) {
-                auto &delta = exchange_message->book_delta.value();
-                std::cout << "Parsed book delta update for " << delta.result.instrument_name << " with depth " << delta.result.depth << std::endl;
-            }
-            break;
-        case ExchangeTypes::MessageType::SUBSCRIPTION_REQUEST:
-            if (exchange_message->subscription_request.has_value()) {
-                auto &request = exchange_message->subscription_request.value();
-                std::cout << "Parsed subscription request with " << request.params.channels.size() << " channels" << std::endl;
-            }
-            break;
-        default:
-            std::cout << "Unknown message type" << std::endl;
-            break;
-        }
+    auto buffer = data_normalizer_.ParseExchangeMessage(message);
 
-        // Forward to orderbook or other components
-        // orderbook_->UpdateOrderBook(*exchange_message);
-    } else {
-        std::cerr << "Failed to parse message: " << message << std::endl;
+    if (buffer.empty()) {
+        std::cout << "Failed to parse message" << std::endl;
+        return;
     }
-}
 
-std::optional<ExchangeTypes::ExchangeMessage> FeedProcessing::ParseExchangeMessage(const std::string &json_str) {
-    return data_normalizer_.ParseExchangeMessage(json_str);
-}
+    ExchangeTypes::MessageType msg_type = ExchangeTypes::GetMessageType(buffer);
 
-// Legacy method for backward compatibility
-std::optional<ExchangeTypes::BookSnapshotResponse> FeedProcessing::ParseOrderBookUpdate(const std::string &json_str) {
-    return data_normalizer_.ParseOrderBookUpdate(json_str);
+    switch (msg_type) {
+    case ExchangeTypes::MessageType::BOOK_SNAPSHOT: {
+        const auto *msg = ExchangeTypes::CastToMessage<ExchangeTypes::BookSnapshotResponse>(buffer);
+        if (msg) {
+            std::cout << "Parsed book snapshot for " << msg->result.instrument_name << " with depth " << msg->result.depth << std::endl;
+        }
+        break;
+    }
+    case ExchangeTypes::MessageType::BOOK_DELTA_UPDATE: {
+        const auto *msg = ExchangeTypes::CastToMessage<ExchangeTypes::BookDeltaResponse>(buffer);
+        if (msg) {
+            std::cout << "Parsed book delta update for " << msg->result.instrument_name << " with depth " << msg->result.depth << std::endl;
+        }
+        break;
+    }
+    case ExchangeTypes::MessageType::TRADE: {
+        const auto *msg = ExchangeTypes::CastToMessage<ExchangeTypes::TradeResponse>(buffer);
+        if (msg) {
+            std::cout << "Parsed trade message for " << msg->result.instrument_name << " with " << msg->result.data.size() << " trades" << std::endl;
+        }
+        break;
+    }
+    default:
+        std::cout << "Unknown message type" << std::endl;
+        break;
+    }
 }

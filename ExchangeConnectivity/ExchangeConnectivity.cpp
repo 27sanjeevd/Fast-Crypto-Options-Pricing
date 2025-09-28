@@ -93,30 +93,18 @@ void ExchangeWebsocketClient::OnHandshake(beast::error_code ec) {
 
     std::cout << "WebSocket connected successfully!" << std::endl;
 
-    // Build subscription for all tickers
-    std::ostringstream channels;
-    channels << "[";
+    // Create subscription request (both book and trade)
+    auto subscription_request = CreateSubscriptionRequest(true, true);
+    std::string subscription_json = subscription_request.to_string();
 
-    bool first = true;
-    for (const auto &ticker : tickers_) {
-        if (!first) {
-            channels << ",";
-        }
-        channels << "\"book." << ticker << ".10\",\"ticker." << ticker << "\"";
-        first = false;
-    }
+    std::cout << "Sending subscription: " << subscription_json << std::endl;
 
-    channels << "]";
-
-    std::string subscription =
-        "{\"id\":1,\"method\":\"subscribe\",\"params\":{\"channels\":" + channels.str() + ",\"book_subscription_type\":\"SNAPSHOT_AND_UPDATE\"}}";
-
-    std::cout << "Sending subscription: " << subscription << std::endl;
-
-    ws_->async_write(net::buffer(subscription), [this](beast::error_code ec, std::size_t) {
+    ws_->async_write(net::buffer(subscription_json), [this](beast::error_code ec, std::size_t) {
         if (!ec) {
             std::cout << "Subscription sent!" << std::endl;
             ws_->async_read(buffer_, beast::bind_front_handler(&ExchangeWebsocketClient::OnRead, this));
+        } else {
+            std::cerr << "Failed to send subscription: " << ec.message() << std::endl;
         }
     });
 }
@@ -139,4 +127,26 @@ void ExchangeWebsocketClient::OnRead(beast::error_code ec, std::size_t bytes_tra
     if (running_.load()) {
         ws_->async_read(buffer_, beast::bind_front_handler(&ExchangeWebsocketClient::OnRead, this));
     }
+}
+
+ExchangeTypes::SubscriptionRequest ExchangeWebsocketClient::CreateSubscriptionRequest(bool include_book, bool include_trade) const {
+    ExchangeTypes::SubscriptionRequest request;
+    request.id = 1;
+    request.method = "subscribe";
+
+    for (const auto &ticker : tickers_) {
+        if (include_book) {
+            request.params.channels.push_back("book." + ticker + ".10");
+        }
+        if (include_trade) {
+            request.params.channels.push_back("trade." + ticker);
+        }
+    }
+
+    if (include_book) {
+        request.params.book_subscription_type = "SNAPSHOT_AND_UPDATE";
+        request.params.book_update_frequency = 10; // Default frequency for delta
+    }
+
+    return request;
 }

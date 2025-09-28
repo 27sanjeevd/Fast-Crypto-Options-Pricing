@@ -10,6 +10,10 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/beast/websocket/ssl.hpp>
 
+#include "Types/ExchangeBookTypes.h"
+#include "Types/SharedTypes.h"
+#include "Types/TradeTypes.h"
+
 namespace beast = boost::beast;
 namespace websocket = beast::websocket;
 namespace net = boost::asio;
@@ -39,6 +43,8 @@ class ExchangeWebsocketClient {
     static const std::string HOST;
     static const std::string PORT;
     static const std::string TARGET;
+
+    ExchangeTypes::SubscriptionRequest CreateSubscriptionRequest(bool include_book, bool include_trade) const;
 
     // Async callback handlers
     void OnResolve(beast::error_code ec, tcp::resolver::results_type results);

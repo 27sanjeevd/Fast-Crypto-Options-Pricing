@@ -8,6 +8,7 @@ cc_library(
         "@simdjson//:simdjson",
         "//Types:ExchangeBookTypes",
         "//Types:SharedTypes",
+        "//Types:TradeTypes",
     ],
 )
 
@@ -21,6 +22,7 @@ cc_library(
         ":DataNormalization",
         "//Types:ExchangeBookTypes",
         "//Types:SharedTypes",
+        "//Types:TradeTypes",
     ],
 )
 
