@@ -1,18 +1,11 @@
 #pragma once
 
+#include "SharedTypes.h"
 #include <optional>
 #include <string>
 #include <vector>
 
 namespace ExchangeTypes {
-
-// MessageHeader definition (moved from SharedTypes.h to avoid circular dependency)
-enum class MessageType : uint32_t { BOOK_SNAPSHOT = 1, BOOK_DELTA_UPDATE = 2, TRADE = 3, UNKNOWN = 0 };
-
-struct MessageHeader {
-    MessageType type;
-    uint32_t size; // Total size of the message including header
-};
 
 struct Level {
     std::string price;
@@ -42,13 +35,6 @@ struct BookDeltaData {
     uint64_t t;
     uint64_t u;
     uint64_t pu;
-};
-
-struct BaseResponse {
-    MessageHeader header; // Must be first field
-    int64_t id;
-    std::string method;
-    int code;
 };
 
 struct BookSnapshotResult {

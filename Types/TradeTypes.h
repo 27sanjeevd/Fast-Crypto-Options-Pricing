@@ -7,13 +7,12 @@
 namespace ExchangeTypes {
 
 struct TradeData {
-    std::string d;  // Trade ID
-    uint64_t t;     // Trade timestamp in milliseconds
-    std::string tn; // Trade timestamp in nanoseconds (optional)
-    std::string q;  // Trade quantity
-    std::string p;  // Trade price
-    std::string s;  // Side (BUY or SELL)
-    std::string i;  // Instrument name
+    std::string d; // Trade ID
+    uint64_t t;    // Trade timestamp in milliseconds
+    std::string q; // Trade quantity
+    std::string p; // Trade price
+    std::string s; // Side (BUY or SELL)
+    std::string i; // Instrument name
 };
 
 struct TradeResult {
@@ -23,11 +22,7 @@ struct TradeResult {
     std::vector<TradeData> data;
 };
 
-struct TradeResponse {
-    MessageHeader header; // Must be first field
-    int64_t id;
-    std::string method;
-    int code;
+struct TradeResponse : public BaseResponse {
     TradeResult result;
 };
 

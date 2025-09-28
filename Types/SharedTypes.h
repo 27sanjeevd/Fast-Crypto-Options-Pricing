@@ -1,12 +1,19 @@
 #pragma once
 
-#include "ExchangeBookTypes.h"
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace ExchangeTypes {
+
+// Message types and header definitions
+enum class MessageType : uint32_t { BOOK_SNAPSHOT = 1, BOOK_DELTA_UPDATE = 2, TRADE = 3, UNKNOWN = 0 };
+
+struct MessageHeader {
+    MessageType type;
+    uint32_t size; // Total size of the message including header
+};
 
 using MessageBuffer = std::vector<uint8_t>;
 
@@ -22,6 +29,14 @@ struct SubscriptionRequest {
     SubscriptionParams params;
 
     std::string to_string() const;
+};
+
+// Base response structure for all message responses
+struct BaseResponse {
+    MessageHeader header; // Must be first field
+    int64_t id;
+    std::string method;
+    int code;
 };
 
 // Helper functions to cast buffer to message types

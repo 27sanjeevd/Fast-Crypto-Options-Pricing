@@ -359,12 +359,6 @@ ExchangeTypes::TradeData DataNormalization::ParseTradeData(const simdjson::dom::
         data.t = t;
     }
 
-    // Parse trade timestamp in nanoseconds (tn) - optional field
-    std::string_view tn;
-    if (data_obj["tn"].get_string().get(tn) == simdjson::SUCCESS) {
-        data.tn = std::string(tn);
-    }
-
     // Parse trade quantity (q)
     std::string_view q;
     if (data_obj["q"].get_string().get(q) == simdjson::SUCCESS) {
