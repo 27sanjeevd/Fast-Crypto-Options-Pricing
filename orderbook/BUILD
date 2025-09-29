@@ -4,6 +4,7 @@ cc_library(
     hdrs = [
         "Orderbook.h",
         "Data.h",
+        "OrderbookTypes.h",
     ],
     visibility = ["//visibility:public"],
     copts = ["-std=c++20"],

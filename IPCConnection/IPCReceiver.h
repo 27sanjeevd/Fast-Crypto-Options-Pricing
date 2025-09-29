@@ -8,7 +8,7 @@ namespace IPC {
 
 class IPCReceiver {
   public:
-    IPCReceiver(const std::string &socket_name);
+    IPCReceiver(const std::string &socket_path);
     ~IPCReceiver();
 
     bool Initialize();
@@ -24,7 +24,6 @@ class IPCReceiver {
     bool AcceptConnection();
     bool ReadExact(void *buffer, size_t size);
 
-    std::string socket_name_;
     std::string socket_path_;
     int server_socket_;
     int client_socket_;

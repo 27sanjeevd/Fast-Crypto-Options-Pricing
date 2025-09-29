@@ -8,9 +8,7 @@
 
 namespace IPC {
 
-IPCReceiver::IPCReceiver(const std::string &socket_name) : socket_name_(socket_name), server_socket_(-1), client_socket_(-1) {
-    socket_path_ = "/tmp/" + socket_name + ".sock";
-}
+IPCReceiver::IPCReceiver(const std::string &socket_path) : socket_path_(socket_path), server_socket_(-1), client_socket_(-1) {}
 
 IPCReceiver::~IPCReceiver() { CleanupSocket(); }
 

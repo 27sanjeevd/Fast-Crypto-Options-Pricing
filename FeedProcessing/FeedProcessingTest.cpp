@@ -5,7 +5,10 @@
 #include <thread>
 
 TEST(FeedProcessingTest, ParseValidOrderBookUpdate) {
-    FeedProcessing fp("book.ETHUSD-PERP.10");
+    const std::string input_socket_path = "/tmp/market_data_input.sock";
+    const std::string bbo_socket_path = "/tmp/bbo_output.sock";
+
+    FeedProcessing fp(input_socket_path, bbo_socket_path);
 
     std::thread fp_thread([&fp]() { fp.Run(3); });
 
@@ -13,7 +16,7 @@ TEST(FeedProcessingTest, ParseValidOrderBookUpdate) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     IPC::IPCSender sender;
-    EXPECT_TRUE(sender.Connect(fp.GetSocketPath()));
+    EXPECT_TRUE(sender.Connect(input_socket_path));
 
     std::string message1 = R"({
         "id": -1,
@@ -106,7 +109,10 @@ TEST(FeedProcessingTest, ParseValidOrderBookUpdate) {
 }
 
 TEST(FeedProcessingTest, ParseMixedMessages) {
-    FeedProcessing fp("book.BTCUSD-PERP.10");
+    const std::string input_socket_path = "/tmp/btc_market_data.sock";
+    const std::string bbo_socket_path = "/tmp/btc_bbo_output.sock";
+
+    FeedProcessing fp(input_socket_path, bbo_socket_path);
 
     std::thread fp_thread([&fp]() { fp.Run(3); });
 
@@ -114,7 +120,7 @@ TEST(FeedProcessingTest, ParseMixedMessages) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     IPC::IPCSender sender;
-    EXPECT_TRUE(sender.Connect(fp.GetSocketPath()));
+    EXPECT_TRUE(sender.Connect(input_socket_path));
 
     std::string message1 =
         R"(

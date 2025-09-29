@@ -94,7 +94,7 @@ void ExchangeWebsocketClient::OnHandshake(beast::error_code ec) {
     std::cout << "WebSocket connected successfully!" << std::endl;
 
     // Create subscription request (both book and trade)
-    auto subscription_request = CreateSubscriptionRequest(true, true);
+    auto subscription_request = CreateSubscriptionRequest(/* book */ true, /* trade */ true);
     std::string subscription_json = subscription_request.to_string();
 
     std::cout << "Sending subscription: " << subscription_json << std::endl;
