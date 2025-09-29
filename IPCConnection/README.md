@@ -130,20 +130,3 @@ Data is transmitted using a simple, reliable protocol:
 2. **Data Payload**: The actual binary data
 
 This ensures reliable framing over the stream socket, guaranteeing complete message delivery.
-
-## Architecture Benefits
-
-- **Clean Separation**: Transport layer (IPC framing) vs Application layer (data interpretation)
-- **No Duplication**: Size information only exists in the transport layer where it's needed
-- **Type Safety**: Binary-first design works with any data type
-- **Simplicity**: Single method for sending, single method for receiving
-- **Flexibility**: From JSON strings to binary structs - one API handles all
-
-## Migration Notes
-
-The API has been simplified to eliminate redundancy:
-- ❌ `SendMessage(string)` - removed
-- ❌ `ReadMessage()` - removed  
-- ❌ `SendData(vector)` - removed
-- ✅ `SendData(void*, size_t)` - universal sender
-- ✅ `ReadData()` - universal receiver

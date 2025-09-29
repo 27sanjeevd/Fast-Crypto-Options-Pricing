@@ -50,21 +50,21 @@ void FeedProcessing::ProcessMessage(const std::string &message) {
     case ExchangeTypes::MessageType::BOOK_SNAPSHOT: {
         const auto *msg = ExchangeTypes::CastToMessage<ExchangeTypes::BookSnapshotResponse>(buffer);
         if (msg) {
-            std::cout << "Parsed book snapshot for " << msg->result.instrument_name << " with depth " << msg->result.depth << std::endl;
+            book_snapshot_count_++;
         }
         break;
     }
     case ExchangeTypes::MessageType::BOOK_DELTA_UPDATE: {
         const auto *msg = ExchangeTypes::CastToMessage<ExchangeTypes::BookDeltaResponse>(buffer);
         if (msg) {
-            std::cout << "Parsed book delta update for " << msg->result.instrument_name << " with depth " << msg->result.depth << std::endl;
+            book_delta_count_++;
         }
         break;
     }
     case ExchangeTypes::MessageType::TRADE: {
         const auto *msg = ExchangeTypes::CastToMessage<ExchangeTypes::TradeResponse>(buffer);
         if (msg) {
-            std::cout << "Parsed trade message for " << msg->result.instrument_name << " with " << msg->result.data.size() << " trades" << std::endl;
+            trade_count_++;
         }
         break;
     }
