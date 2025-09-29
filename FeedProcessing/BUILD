@@ -23,6 +23,7 @@ cc_library(
         "//Types:ExchangeBookTypes",
         "//Types:SharedTypes",
         "//Types:TradeTypes",
+        "//IPCConnection:IPCReceiver",
     ],
 )
 
@@ -41,6 +42,7 @@ cc_test(
     srcs = ["FeedProcessingTest.cpp"],
     deps = [
         ":FeedProcessing",
+        "//IPCConnection:IPCSender",
         "@googletest//:gtest_main",
     ],
     copts = ["-std=c++20"],

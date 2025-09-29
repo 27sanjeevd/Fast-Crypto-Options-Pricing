@@ -62,7 +62,6 @@ template <typename T> ExchangeTypes::MessageBuffer DataNormalization::SerializeM
 
     // Set the header
     msg_copy->header.type = type;
-    msg_copy->header.size = sizeof(T);
 
     return buffer;
 }

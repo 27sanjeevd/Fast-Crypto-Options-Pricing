@@ -12,7 +12,6 @@ enum class MessageType : uint32_t { BOOK_SNAPSHOT = 1, BOOK_DELTA_UPDATE = 2, TR
 
 struct MessageHeader {
     MessageType type;
-    uint32_t size; // Total size of the message including header
 };
 
 using MessageBuffer = std::vector<uint8_t>;
@@ -44,10 +43,7 @@ template <typename T> const T *CastToMessage(const MessageBuffer &buffer) {
     if (buffer.size() < sizeof(MessageHeader)) {
         return nullptr;
     }
-    const MessageHeader *header = reinterpret_cast<const MessageHeader *>(buffer.data());
-    if (buffer.size() < header->size) {
-        return nullptr;
-    }
+
     return reinterpret_cast<const T *>(buffer.data());
 }
 
@@ -55,10 +51,7 @@ template <typename T> T *CastToMessage(MessageBuffer &buffer) {
     if (buffer.size() < sizeof(MessageHeader)) {
         return nullptr;
     }
-    const MessageHeader *header = reinterpret_cast<const MessageHeader *>(buffer.data());
-    if (buffer.size() < header->size) {
-        return nullptr;
-    }
+
     return reinterpret_cast<T *>(buffer.data());
 }
 
